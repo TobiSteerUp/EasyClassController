@@ -26,7 +26,7 @@ public class ClassFetcher {
     private URL baseResource;
 
     private ClassFetcher(String path) {
-        this.path = path.replaceAll("\\.", "/");
+        this.path = path;
     }
 
     public static ClassFetcher create(String path) {
@@ -34,14 +34,14 @@ public class ClassFetcher {
     }
 
     public ClassFetcher createBaseStream() {
-        baseResource = this.classLoader.getResource(this.path);
+        baseResource = this.classLoader.getResource(this.path.replaceAll("\\.", "/"));
         assert baseResource != null;
         return this;
     }
 
     public void fetch(Consumer<List<Class<?>>> classFetchedConsumer) throws IOException, ClassNotFoundException {
         DataInputStream dataInputStream = new DataInputStream((InputStream) baseResource.getContent());
-        this.loadClassesOfInputStream(dataInputStream, "");
+        this.loadClassesOfInputStream(dataInputStream, this.path);
         dataInputStream.close();
         classFetchedConsumer.accept(this.classes);
     }
