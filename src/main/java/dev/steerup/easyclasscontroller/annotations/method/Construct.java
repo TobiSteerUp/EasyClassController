@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Construct {
-    Priority priority() default Priority.NORMAL;
+    Priority value() default Priority.NORMAL;
 
     enum Priority {
         HIGHEST, HIGH, NORMAL, LOW, LOWEST

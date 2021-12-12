@@ -129,7 +129,7 @@ public class ContextBuilder {
             Object component = context.getComponent(clazz);
             Arrays.stream(clazz.getDeclaredMethods())
                     .filter(method -> method.isAnnotationPresent(Construct.class))
-                    .filter(method -> method.getAnnotation(Construct.class).priority().equals(priority))
+                    .filter(method -> method.getAnnotation(Construct.class).value().equals(priority))
                     .forEach(method -> ReflectionUtils.invokeMethod(method, component));
         });
     }
