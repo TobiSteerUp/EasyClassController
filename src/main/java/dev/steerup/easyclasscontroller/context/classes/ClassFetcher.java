@@ -26,7 +26,7 @@ public class ClassFetcher {
     private URL baseResource;
 
     private ClassFetcher(String path) {
-        this.path = path;
+        this.path = path.replaceAll("\\.", "/");
     }
 
     public static ClassFetcher create(String path) {

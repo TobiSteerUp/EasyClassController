@@ -28,8 +28,6 @@ public class ContextBuilder {
     private final Context context = new Context();
     private final String path;
 
-    private Consumer<Context> preBuiltContextConsumer;
-
     private ContextBuilder(String path) {
         this.path = path;
     }
@@ -39,7 +37,7 @@ public class ContextBuilder {
     }
 
     public ContextBuilder preBuilt(Consumer<Context> preBuiltContextConsumer) {
-        this.preBuiltContextConsumer = preBuiltContextConsumer;
+        preBuiltContextConsumer.accept(this.context);
         return this;
     }
 
@@ -82,7 +80,6 @@ public class ContextBuilder {
                     });
         });
 
-        this.preBuiltContextConsumer.accept(context);
         return this;
     }
 

@@ -25,11 +25,11 @@ public class Controller {
     public static Context initialize(String path, Consumer<Context> preBuiltContextConsumer) throws IOException, ClassNotFoundException {
         Context build = ContextBuilder
                 .create(path)
-                .preBuilt(preBuiltContextConsumer)
                 .initializeClasses()
                 .instantiateClasses()
                 .registerExtraComponents()
                 .loadProvidedElements()
+                .preBuilt(preBuiltContextConsumer)
                 .setProvidedComponents()
                 .setProvidedElements()
                 .performConstructMethods()
