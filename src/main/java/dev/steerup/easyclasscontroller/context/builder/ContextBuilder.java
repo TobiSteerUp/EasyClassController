@@ -20,20 +20,22 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ContextBuilder {
 
     private final List<Class<?>> classes = new ArrayList<>();
-    private final Context context = new Context();
+    private final Context context;
     private final String path;
 
-    private ContextBuilder(String path) {
+    private ContextBuilder(String path, Optional<Context> optionalContext) {
         this.path = path;
+        this.context = optionalContext.orElseGet(Context::new);
     }
 
-    public static ContextBuilder create(String path) {
-        return new ContextBuilder(path);
+    public static ContextBuilder create(String path, Optional<Context> optionalContext) {
+        return new ContextBuilder(path, optionalContext);
     }
 
     public ContextBuilder preBuilt(Consumer<Context> preBuiltContextConsumer) {

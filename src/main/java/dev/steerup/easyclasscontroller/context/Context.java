@@ -40,4 +40,8 @@ public class Context {
                 .filter(component -> component.getClass().isAssignableFrom(type))
                 .collect(Collectors.toList()));
     }
+
+    public Map<Class<?>, Object> getComponents() {
+        return componentMap;
+    }
 }
