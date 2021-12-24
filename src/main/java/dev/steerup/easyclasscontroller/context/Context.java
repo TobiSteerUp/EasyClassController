@@ -25,8 +25,8 @@ public class Context {
         this.componentMap.put(clazz, instance);
     }
 
-    public Object getProvidedElement(String name) {
-        return this.providedObjectsMap.get(name);
+    public <T> T getProvidedElement(String name) {
+        return (T) this.providedObjectsMap.get(name);
     }
 
     public <T> T getComponent(Class<T> clazz) {

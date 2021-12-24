@@ -18,34 +18,32 @@ public class Controller {
 
     private static Context context;
 
-    public static Context attach(String path) throws IOException, ClassNotFoundException {
-        return attach(path, preBuiltContext -> {
-
+    public static Context attach(Class<?> baseClass, String path) throws IOException, ClassNotFoundException {
+        return attach(baseClass, path, preBuiltContext -> {
         });
     }
 
-    public static Context attach(String path, Consumer<Context> preBuiltContextConsumer) throws IOException, ClassNotFoundException {
+    public static Context attach(Class<?> baseClass, String path, Consumer<Context> preBuiltContextConsumer) throws IOException, ClassNotFoundException {
         if (context == null) {
             throw new InternalError("Context doesn't exist.");
         }
 
-        createContext(path, preBuiltContextConsumer, Optional.of(context));
-
+        createContext(baseClass, path, preBuiltContextConsumer, Optional.of(context));
         return context;
     }
 
-    public static Context initialize(String path) throws IOException, ClassNotFoundException {
-        return initialize(path, context -> {
+    public static Context initialize(Class<?> baseClass, String path) throws IOException, ClassNotFoundException {
+        return initialize(baseClass, path, context -> {
         });
     }
 
-    public static Context initialize(String path, Consumer<Context> preBuiltContextConsumer) throws IOException, ClassNotFoundException {
-        return context = createContext(path, preBuiltContextConsumer, Optional.empty());
+    public static Context initialize(Class<?> baseClass, String path, Consumer<Context> preBuiltContextConsumer) throws IOException, ClassNotFoundException {
+        return context = createContext(baseClass, path, preBuiltContextConsumer, Optional.empty());
     }
 
-    private static Context createContext(String path, Consumer<Context> preBuiltContextConsumer, Optional<Context> optionalContext) throws IOException, ClassNotFoundException {
+    private static Context createContext(Class<?> baseClass, String path, Consumer<Context> preBuiltContextConsumer, Optional<Context> optionalContext) throws IOException, ClassNotFoundException {
         return ContextBuilder
-                .create(path, optionalContext)
+                .create(baseClass, path, optionalContext)
                 .initializeClasses()
                 .instantiateClasses()
                 .registerExtraComponents()

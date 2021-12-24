@@ -18,7 +18,7 @@ public class ReflectionUtils {
         try {
             field.set(instance, value);
         } catch (IllegalAccessException e) {
-            throw new InternalError("Field " + field.getName() + " in Class " + instance.getClass().getSimpleName() + " could not be edited.");
+            e.printStackTrace();
         }
     }
 
@@ -27,7 +27,7 @@ public class ReflectionUtils {
         try {
             method.invoke(instance);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new InternalError("Method " + method.getName() + " in Class " + instance.getClass().getSimpleName() + " could not be invoked.");
+            e.printStackTrace();
         }
     }
 
@@ -41,7 +41,8 @@ public class ReflectionUtils {
         try {
             return field.get(instance);
         } catch (IllegalAccessException e) {
-            throw new InternalError("Field " + field.getName() + " in Class " + instance.getClass().getSimpleName() + " could not be provided.");
+            e.printStackTrace();
         }
+        return null;
     }
 }

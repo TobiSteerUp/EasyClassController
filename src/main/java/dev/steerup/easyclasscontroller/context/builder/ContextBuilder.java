@@ -11,8 +11,10 @@ import dev.steerup.easyclasscontroller.annotations.field.Fill;
 import dev.steerup.easyclasscontroller.annotations.field.Load;
 import dev.steerup.easyclasscontroller.annotations.field.Provide;
 import dev.steerup.easyclasscontroller.annotations.method.Construct;
+import dev.steerup.easyclasscontroller.annotations.type.Component;
 import dev.steerup.easyclasscontroller.context.Context;
 import dev.steerup.easyclasscontroller.context.classes.ClassFetcher;
+import dev.steerup.easyclasscontroller.context.classes.JarClassFetcher;
 import dev.steerup.easyclasscontroller.utils.ReflectionUtils;
 
 import java.io.IOException;
@@ -26,16 +28,18 @@ import java.util.function.Consumer;
 public class ContextBuilder {
 
     private final List<Class<?>> classes = new ArrayList<>();
+    private final Class<?> baseClass;
     private final Context context;
     private final String path;
 
-    private ContextBuilder(String path, Optional<Context> optionalContext) {
+    private ContextBuilder(Class<?> baseClass, String path, Optional<Context> optionalContext) {
+        this.baseClass = baseClass;
         this.path = path;
         this.context = optionalContext.orElseGet(Context::new);
     }
 
-    public static ContextBuilder create(String path, Optional<Context> optionalContext) {
-        return new ContextBuilder(path, optionalContext);
+    public static ContextBuilder create(Class<?> baseClass, String path, Optional<Context> optionalContext) {
+        return new ContextBuilder(baseClass, path, optionalContext);
     }
 
     public ContextBuilder preBuilt(Consumer<Context> preBuiltContextConsumer) {
@@ -44,10 +48,11 @@ public class ContextBuilder {
     }
 
     public ContextBuilder initializeClasses() throws IOException, ClassNotFoundException {
-        ClassFetcher
-                .create(this.path)
-                .createBaseStream()
-                .fetch(this.classes::addAll);
+        ClassFetcher.fetch(this.baseClass, this.path, fetchedClasses -> fetchedClasses
+                .stream()
+                .filter(clazz -> clazz.isAnnotationPresent(Component.class))
+                .forEach(this.classes::add)
+        );
         return this;
     }
 
@@ -91,8 +96,17 @@ public class ContextBuilder {
             Arrays.stream(clazz.getDeclaredFields())
                     .filter(field -> field.isAnnotationPresent(Load.class))
                     .forEach(field -> {
-                        Object providedComponent = context.getComponent(field.getType());
-
+                        Class<?> type = field.getType();
+                        Object providedComponent = context.getComponent(type);
+/*
+                        if (providedComponent == null) {
+                            providedComponent = context.getComponents()
+                                    .values()
+                                    .stream()
+                                    .filter(o -> o.getClass().isAssignableFrom(type))
+                                    .findFirst().orElse(null);
+                        }
+*/
                         ReflectionUtils.setFieldValue(field, component, providedComponent);
                     });
         });
@@ -140,6 +154,7 @@ public class ContextBuilder {
         try {
             return clazz.getConstructors()[0].newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
             throw new InternalError("Class " + clazz.getSimpleName() + " could not be instantiated.");
         }
     }
