@@ -45,10 +45,10 @@ public class Controller {
         return ContextBuilder
                 .create(baseClass, path, optionalContext)
                 .initializeClasses()
-                .instantiateClasses()
                 .registerExtraComponents()
-                .loadProvidedElements()
                 .preBuilt(preBuiltContextConsumer)
+                .instantiateClasses()
+                .loadProvidedElements()
                 .setProvidedComponents()
                 .setProvidedElements()
                 .performConstructMethods()

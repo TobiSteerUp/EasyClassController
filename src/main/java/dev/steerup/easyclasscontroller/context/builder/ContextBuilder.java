@@ -14,16 +14,16 @@ import dev.steerup.easyclasscontroller.annotations.method.Construct;
 import dev.steerup.easyclasscontroller.annotations.type.Component;
 import dev.steerup.easyclasscontroller.context.Context;
 import dev.steerup.easyclasscontroller.context.classes.ClassFetcher;
-import dev.steerup.easyclasscontroller.context.classes.JarClassFetcher;
 import dev.steerup.easyclasscontroller.utils.ReflectionUtils;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.lang.reflect.Parameter;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class ContextBuilder {
 
@@ -57,7 +57,58 @@ public class ContextBuilder {
     }
 
     public ContextBuilder instantiateClasses() {
-        classes.stream()
+        final CopyOnWriteArrayList<Class<?>> classes = new CopyOnWriteArrayList<>(this.classes);
+
+        int maxIterations = this.classes.size() / 5 + 2;
+        int iterations = 0;
+
+        while (!classes.isEmpty()) {
+            if (iterations >= maxIterations) {
+                throw new IllegalArgumentException("Classes could not be instantiated: " + classes.stream().map(clazz -> clazz.getSimpleName() + "(Parameters: " + Arrays.stream(clazz.getConstructors()[0].getParameters()).map(parameter -> parameter.getType().getSimpleName() + " " + parameter.getName()).collect(Collectors.joining(", ")) + ")").collect(Collectors.joining(", ")));
+            }
+            iterations++;
+            for (Class<?> clazz : classes) {
+                classes.remove(clazz);
+                final Constructor<?> constructor = clazz.getConstructors()[0];
+                final int parameterCount = constructor.getParameterCount();
+
+                if (parameterCount == 0) {
+                    Object instance = instantiateClass(clazz);
+                    context.registerComponent(clazz, instance);
+                } else {
+                    List<Object> args = new ArrayList<>();
+                    for (Parameter parameter : constructor.getParameters()) {
+                        final Class<?> parameterType = parameter.getType();
+                        final Object parameterInstance = context.getComponent(parameterType);
+
+                        if (parameterInstance != null) {
+                            args.add(parameterInstance);
+                        } else {
+                            final String parameterName = parameter.getName();
+                            final Object providedElement = context.getProvidedElement(parameterName);
+                            if (providedElement != null) {
+                                args.add(providedElement);
+                            } else {
+                                final Object providedElementByType = context.getProvidedElementByType(parameterType);
+                                if (providedElementByType != null) {
+                                    args.add(providedElementByType);
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (args.size() != parameterCount) {
+                        classes.add(clazz);
+                        continue;
+                    }
+                    final Object instance = instantiateClass(clazz, args.toArray());
+                    context.registerComponent(clazz, instance);
+                }
+            }
+        }
+
+        this.classes.stream()
                 .filter(clazz -> clazz.getConstructors()[0].getParameterCount() == 0)
                 .forEach(clazz -> {
                     Object instance = instantiateClass(clazz);
@@ -98,15 +149,7 @@ public class ContextBuilder {
                     .forEach(field -> {
                         Class<?> type = field.getType();
                         Object providedComponent = context.getComponent(type);
-/*
-                        if (providedComponent == null) {
-                            providedComponent = context.getComponents()
-                                    .values()
-                                    .stream()
-                                    .filter(o -> o.getClass().isAssignableFrom(type))
-                                    .findFirst().orElse(null);
-                        }
-*/
+
                         ReflectionUtils.setFieldValue(field, component, providedComponent);
                     });
         });
@@ -150,9 +193,10 @@ public class ContextBuilder {
         });
     }
 
-    private Object instantiateClass(Class<?> clazz) {
+    private Object instantiateClass(Class<?> clazz, Object... args) {
         try {
-            return clazz.getConstructors()[0].newInstance();
+            final Constructor<?> constructor = clazz.getConstructors()[0];
+            return constructor.newInstance(args);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
             throw new InternalError("Class " + clazz.getSimpleName() + " could not be instantiated.");

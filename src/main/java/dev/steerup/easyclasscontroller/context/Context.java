@@ -29,6 +29,15 @@ public class Context {
         return (T) this.providedObjectsMap.get(name);
     }
 
+    public <T> T getProvidedElementByType(Class<T> parameterType) {
+        return (T) this.providedObjectsMap
+                .values()
+                .stream()
+                .filter(o -> o.getClass().isAssignableFrom(parameterType))
+                .findFirst()
+                .orElse(null);
+    }
+
     public <T> T getComponent(Class<T> clazz) {
         return clazz.cast(this.componentMap.get(clazz));
     }
