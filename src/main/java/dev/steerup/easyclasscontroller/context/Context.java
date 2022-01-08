@@ -46,7 +46,7 @@ public class Context {
         return ((List<T>) this.componentMap
                 .values()
                 .stream()
-                .filter(component -> component.getClass().isAssignableFrom(type))
+                .filter(component -> type.isAssignableFrom(component.getClass()))
                 .collect(Collectors.toList()));
     }
 
