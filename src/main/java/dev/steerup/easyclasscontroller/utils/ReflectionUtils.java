@@ -22,10 +22,10 @@ public class ReflectionUtils {
         }
     }
 
-    public static void invokeMethod(Method method, Object instance) {
+    public static void invokeMethod(Method method, Object instance, Object... args) {
         method.setAccessible(true);
         try {
-            method.invoke(instance);
+            method.invoke(instance, args);
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }

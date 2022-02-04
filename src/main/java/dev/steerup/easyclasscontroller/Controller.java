@@ -9,6 +9,7 @@ package dev.steerup.easyclasscontroller;
 
 import dev.steerup.easyclasscontroller.context.Context;
 import dev.steerup.easyclasscontroller.context.builder.ContextBuilder;
+import dev.steerup.easyclasscontroller.custom.ClassLoader;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -17,6 +18,11 @@ import java.util.function.Consumer;
 public class Controller {
 
     private static Context context;
+    private static ClassLoader customClassLoader;
+
+    public static void setLoader(ClassLoader classLoader) {
+        customClassLoader = classLoader;
+    }
 
     public static Context attach(Class<?> baseClass, String path) throws IOException, ClassNotFoundException {
         return attach(baseClass, path, preBuiltContext -> {
@@ -44,7 +50,7 @@ public class Controller {
     private static Context createContext(Class<?> baseClass, String path, Consumer<Context> preBuiltContextConsumer, Optional<Context> optionalContext) throws IOException, ClassNotFoundException {
         return ContextBuilder
                 .create(baseClass, path, optionalContext)
-                .initializeClasses()
+                .initializeClasses(customClassLoader == null ? Optional.empty() : Optional.of(customClassLoader))
                 .registerExtraComponents()
                 .preBuilt(preBuiltContextConsumer)
                 .instantiateClasses()

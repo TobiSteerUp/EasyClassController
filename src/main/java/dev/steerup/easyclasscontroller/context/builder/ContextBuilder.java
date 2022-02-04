@@ -14,6 +14,7 @@ import dev.steerup.easyclasscontroller.annotations.method.Construct;
 import dev.steerup.easyclasscontroller.annotations.type.Component;
 import dev.steerup.easyclasscontroller.context.Context;
 import dev.steerup.easyclasscontroller.context.classes.ClassFetcher;
+import dev.steerup.easyclasscontroller.custom.ClassLoader;
 import dev.steerup.easyclasscontroller.utils.ReflectionUtils;
 
 import java.io.IOException;
@@ -50,12 +51,17 @@ public class ContextBuilder {
         return this;
     }
 
-    public ContextBuilder initializeClasses() throws IOException, ClassNotFoundException {
-        ClassFetcher.fetch(this.baseClass, this.path, fetchedClasses -> fetchedClasses
-                .stream()
-                .filter(clazz -> clazz.isAnnotationPresent(Component.class))
-                .forEach(this.classes::add)
-        );
+    public ContextBuilder initializeClasses(Optional<ClassLoader> classLoader) throws IOException, ClassNotFoundException {
+        if (classLoader.isEmpty()) {
+            ClassFetcher.fetch(this.baseClass, this.path, fetchedClasses -> fetchedClasses
+                    .stream()
+                    .filter(clazz -> clazz.isAnnotationPresent(Component.class))
+                    .forEach(this.classes::add)
+            );
+        } else {
+            final var classes = classLoader.get().loadClasses(this.path);
+            this.classes.addAll(classes);
+        }
         return this;
     }
 
@@ -110,13 +116,6 @@ public class ContextBuilder {
                 }
             }
         }
-
-        this.classes.stream()
-                .filter(clazz -> clazz.getConstructors()[0].getParameterCount() == 0)
-                .forEach(clazz -> {
-                    Object instance = instantiateClass(clazz);
-                    context.registerComponent(clazz, instance);
-                });
         return this;
     }
 
